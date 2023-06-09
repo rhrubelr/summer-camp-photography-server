@@ -28,11 +28,17 @@ async function run() {
     await client.connect();
 
     const instructorCollection = client.db("photography").collection('instructor');
+    const classesCollection = client.db("photography").collection('classes');
 
 
 
     app.get('/instructor', async(req, res)=> {
         const result = await instructorCollection.find().toArray();
+        res.send(result)
+     })
+
+    app.get('/classes', async(req, res)=> {
+        const result = await classesCollection.find().toArray();
         res.send(result)
      })
 
@@ -48,7 +54,7 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('boss is sitting')
+    res.send('photography is running')
 })
 
 app.listen(port, () => {
