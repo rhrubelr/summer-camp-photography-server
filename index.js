@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.PAYMENT_KEY)
 const port = process.env.PORT || 5000;
 
 // middle Ware
@@ -52,6 +53,9 @@ async function run() {
     const classesCollection = client.db("photography").collection('classes');
 
     const enrollCollection = client.db("photography").collection("allEnroll")
+
+    const paymentCollection = client.db("photography").collection("payment")
+
 
 
     app.post('/jwt', (req, res) => {
@@ -136,7 +140,28 @@ async function run() {
 
 
 
+
+    app.get('/my-enroll-class', jwtVerify, async(req, res)=>{
+      const email = req.query.email;
+      // console.log(email)
+      if(!email){
+       return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      if(email !== decodedEmail){
+        return res.status(403).send({error: True, message: 'porviden access'})
+      }
     
+      const query = {email: email};
+      // console.log(query)
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result)
+    })
+    
+
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
