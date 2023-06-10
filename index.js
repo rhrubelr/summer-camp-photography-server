@@ -1,12 +1,32 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
 // middle Ware
 app.use(cors())
 app.use(express.json())
+
+
+
+const jwtVerify = (req, res, next)=>{
+  const authorization = req.headers.authorization
+  if(!authorization){
+    return res.status(401).send({error: true, message: 'unathorization access'})
+  }
+  // bearer token
+  const token = authorization.split(' ')[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SCRECT, (err, decoded)=>{
+    if(err){
+      return res.status(401).send({error: true, message: 'unathorization access'})
+    }
+    req.decoded = decoded;
+    next()
+  })
+}
 
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -31,8 +51,14 @@ async function run() {
 
     const classesCollection = client.db("photography").collection('classes');
   
+    const enrollCollection = client.db("photography").collection("allEnroll")
 
 
+    app.post('/jwt', (req, res)=>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SCRECT, {expiresIn: '1hr' })
+    res.send({token})
+    })
 
     app.get('/instructor', async(req, res)=> {
         const result = await instructorCollection.find().toArray();
@@ -43,6 +69,31 @@ async function run() {
         const result = await classesCollection.find().toArray();
         res.send(result)
      })
+
+
+     app.post('/all-enroll', async(req, res)=>{
+      const enroll = req.body;
+      const result = await enrollCollection.insertOne(enroll);
+      res.send(result)
+    })
+
+
+    app.get('/enroll', jwtVerify, async(req, res)=>{
+      const email = req.query.email;
+      // console.log(email)
+      if(!email){
+       return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      if(email !== decodedEmail){
+        return res.status(403).send({error: True, message: 'porviden access'})
+      }
+    
+      const query = {email: email};
+      // console.log(query)
+      const result = await enrollCollection.find(query).toArray();
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
