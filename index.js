@@ -183,7 +183,7 @@ async function run() {
     // add Class 
     app.post('/addClass', async (req, res) => {
       const item = req.body;
-      const result = await danceClassesCollection.insertOne(item)
+      const result = await classesCollection.insertOne(item)
       res.send(result)
 
     })
@@ -194,6 +194,35 @@ async function run() {
       const result = await enrollCollection.insertOne(enroll);
       res.send(result)
     })
+
+
+    // my class
+    app.get('/my-class', jwtVerify, async (req, res) => {
+      const email = req.query.email;
+      // console.log(email)
+      if (!email) {
+        return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: True, message: 'porviden access' })
+      }
+
+      const query = { email: email };
+      console.log(query)
+      const result = await classesCollection.find(query).toArray();
+      res.send(result)
+    })
+
+
+
+    app.delete('/my-classes/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await classesCollection.deleteOne(query)
+      res.send(result)
+    })
+
 
 
     app.get('/enroll', jwtVerify, async (req, res) => {
