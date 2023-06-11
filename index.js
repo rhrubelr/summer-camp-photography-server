@@ -179,6 +179,15 @@ async function run() {
     })
 
 
+
+    // add Class 
+    app.post('/addClass', async (req, res) => {
+      const item = req.body;
+      const result = await danceClassesCollection.insertOne(item)
+      res.send(result)
+
+    })
+
     // enroll data post 
     app.post('/all-enroll', async (req, res) => {
       const enroll = req.body;
