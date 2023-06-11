@@ -71,11 +71,11 @@ async function run() {
     }
 
 
-    app.get('/users', jwtVerify,verifyAdmin,  async(req, res)=>{
+    app.get('/users', jwtVerify, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
-    
+
 
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -93,37 +93,66 @@ async function run() {
 
     app.get('/users/admin/:email', jwtVerify, async (req, res) => {
       const email = req.params.email;
-    
+
       if (req.decoded.email !== email) {
         res.send({ admin: false })
       }
-    
+
       const query = { email: email }
       const user = await usersCollection.findOne(query);
       const result = { admin: user?.role === 'admin' }
       res.send(result);
     })
-    
+
 
 
     app.get('/users/instructor/:email', jwtVerify, async (req, res) => {
       const email = req.params.email;
-    
+
       if (req.decoded.email !== email) {
         res.send({ admin: false })
       }
-    
+
       const query = { email: email }
       const user = await usersCollection.findOne(query);
       const result = { admin: user?.role === 'instructor' }
       res.send(result);
     })
-    
-    
-    //  user delete 
-    app.delete('/user-delete/:id', async(req, res)=>{
+
+
+
+    app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
+      const updateUser = {
+        $set: {
+          role: 'admin'
+        },
+      }
+      const result = await usersCollection.updateOne(query, updateUser)
+      res.send(result)
+    })
+
+
+
+    app.patch('/users/instructor/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const updateUser = {
+        $set: {
+          role: 'instructor'
+        },
+      }
+      const result = await usersCollection.updateOne(query, updateUser)
+      res.send(result)
+    })
+
+
+
+    //  user delete 
+    app.delete('/user-delete/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
       const result = await usersCollection.deleteOne(query)
       res.send(result)
     })
@@ -137,10 +166,12 @@ async function run() {
       res.send({ token })
     })
 
+
     app.get('/instructor', async (req, res) => {
       const result = await instructorCollection.find().toArray();
       res.send(result)
     })
+
 
     app.get('/classes', async (req, res) => {
       const result = await classesCollection.find().toArray();
@@ -184,7 +215,7 @@ async function run() {
     })
 
 
-
+    // paymet 
     app.post("/create-payment-intent", jwtVerify, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
