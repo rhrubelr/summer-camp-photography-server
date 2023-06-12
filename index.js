@@ -80,13 +80,45 @@ async function run() {
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user.email }
-      const existing = await usersCollection.insertOne(query)
+      const existing = await usersCollection.findOne(query)
 
       if (existing) {
         return res.send({ message: 'user is alreaady existing' })
       }
       const result = await usersCollection.insertOne(user)
       res.send(result)
+    })
+
+
+    app.get('/users/instructor/:email', jwtVerify, async (req, res) => {
+      const email = req.params.email;
+    
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+    
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role === 'instructor' }
+      res.send(result);
+    })
+
+    app.put('/class-update/:id', async(req, res)=>{
+      const id = req.params.id;
+        const updateToy = req.body
+        const query = {_id: new ObjectId(id)}
+        const option = {upsert: true}
+        const toys = {
+          $set: {
+            available_Seats: updateToy.available_seats,
+            // enroll: updateToy.enroll       
+          }
+        }
+        const result = await classesCollection.updateOne(query, toys, option)
+        console.log(result)
+        res.send(result)
+    
+    
     })
 
 
@@ -106,18 +138,7 @@ async function run() {
 
 
 
-    app.get('/users/instructor/:email', jwtVerify, async (req, res) => {
-      const email = req.params.email;
-
-      if (req.decoded.email !== email) {
-        res.send({ admin: false })
-      }
-
-      const query = { email: email }
-      const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === 'instructor' }
-      res.send(result);
-    })
+   
 
 
 
